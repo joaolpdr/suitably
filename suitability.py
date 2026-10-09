@@ -1,3 +1,8 @@
+import json
+from pathlib import Path
+
+CAMINHO_PRODUTOS = Path(__file__).parent / "data" / "produtos.json"
+
 """Regras de suitability: questionário, pontuação e adequação de produtos."""
 
 PERGUNTAS = {
@@ -60,3 +65,16 @@ def calcular_perfil(respostas: dict[str, str]) -> tuple[str, int]:
             return perfil, risco_max
 
     raise ValueError(f"Pontuação fora das faixas: {pontos}")
+
+
+def carregar_produtos(caminho: Path = CAMINHO_PRODUTOS) -> list[dict]:
+    """Lê o catálogo de produtos do JSON."""
+    with open(caminho, encoding="utf-8") as arquivo:
+        return json.load(arquivo)
+
+
+def classificar_produtos(risco_max: int, produtos: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Separa os produtos em adequados e não adequados ao risco máximo do perfil."""
+    adequados = [p for p in produtos if p["risco"] <= risco_max]
+    nao_adequados = [p for p in produtos if p["risco"] > risco_max]
+    return adequados, nao_adequados

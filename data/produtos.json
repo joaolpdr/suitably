@@ -1,0 +1,58 @@
+[
+  {
+    "nome": "Tesouro Selic",
+    "categoria": "Renda fixa",
+    "risco": 1,
+    "liquidez": "D+1",
+    "garantia": "Tesouro Nacional",
+    "descricao": "Título público que acompanha a taxa Selic. Baixa oscilação, indicado para reserva de emergência."
+  },
+  {
+    "nome": "CDB com liquidez diária",
+    "categoria": "Renda fixa",
+    "risco": 1,
+    "liquidez": "Diária",
+    "garantia": "FGC",
+    "descricao": "Empréstimo ao banco com resgate a qualquer momento. Rentabilidade geralmente atrelada ao CDI."
+  },
+  {
+    "nome": "LCI/LCA",
+    "categoria": "Renda fixa",
+    "risco": 2,
+    "liquidez": "No vencimento",
+    "garantia": "FGC",
+    "descricao": "Títulos bancários ligados aos setores imobiliário e agrícola. O dinheiro fica preso até o vencimento."
+  },
+  {
+    "nome": "Tesouro IPCA+",
+    "categoria": "Renda fixa",
+    "risco": 2,
+    "liquidez": "D+1 (sujeito a marcação a mercado)",
+    "garantia": "Tesouro Nacional",
+    "descricao": "Protege da inflação no longo prazo. Se vendido antes do vencimento, pode ter perda."
+  },
+  {
+    "nome": "Fundo multimercado",
+    "categoria": "Fundos",
+    "risco": 3,
+    "liquidez": "Variável (ex.: D+30)",
+    "garantia": "Nenhuma",
+    "descricao": "Fundo que combina renda fixa, ações, câmbio e outros ativos. O resultado depende do gestor."
+  },
+  {
+    "nome": "Fundos imobiliários (FIIs)",
+    "categoria": "Renda variável",
+    "risco": 4,
+    "liquidez": "Negociado em bolsa",
+    "garantia": "Nenhuma",
+    "descricao": "Cotas de fundos que investem em imóveis ou títulos imobiliários. Preço oscila na bolsa."
+  },
+  {
+    "nome": "Ações",
+    "categoria": "Renda variável",
+    "risco": 5,
+    "liquidez": "Negociado em bolsa",
+    "garantia": "Nenhuma",
+    "descricao": "Participação em empresas. Maior potencial de retorno e maior oscilação no curto prazo."
+  }
+]
