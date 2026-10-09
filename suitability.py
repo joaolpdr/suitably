@@ -34,3 +34,29 @@ PERGUNTAS = {
         },
     },
 }
+
+FAIXAS_PERFIL = [
+    (6, "Conservador", 2),
+    (9, "Moderado", 3),
+    (12, "Arrojado", 5),
+]
+
+
+def calcular_perfil(respostas: dict[str, str]) -> tuple[str, int]:
+    """Recebe {chave_da_pergunta: opção escolhida} e retorna (perfil, risco máximo)."""
+    faltando = set(PERGUNTAS) - set(respostas)
+    if faltando:
+        raise ValueError(f"Perguntas sem resposta: {sorted(faltando)}")
+
+    pontos = 0
+    for chave, dados in PERGUNTAS.items():
+        opcao = respostas[chave]
+        if opcao not in dados["opcoes"]:
+            raise ValueError(f"Opção inválida para '{chave}': {opcao}")
+        pontos += dados["opcoes"][opcao]
+
+    for limite, perfil, risco_max in FAIXAS_PERFIL:
+        if pontos <= limite:
+            return perfil, risco_max
+
+    raise ValueError(f"Pontuação fora das faixas: {pontos}")
