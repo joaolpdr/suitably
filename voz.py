@@ -48,7 +48,7 @@ def sintetizar(texto: str) -> bytes:
     """Converte texto em áudio WAV usando o modelo de voz do Gemini."""
     resposta = get_client().models.generate_content(
         model=MODELO_TTS,
-        contents=f"Leia em português do Brasil, com tom calmo e didático: {_limpar_markdown(texto)}",
+        contents=_limpar_markdown(texto),
         config=types.GenerateContentConfig(
             response_modalities=["AUDIO"],
             speech_config=types.SpeechConfig(
