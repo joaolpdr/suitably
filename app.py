@@ -7,7 +7,7 @@ from google.genai import errors
 
 from agent import criar_chat, montar_contexto
 from suitability import PERGUNTAS, calcular_perfil, carregar_produtos, classificar_produtos
-from voz import transcrever
+from voz import sintetizar, transcrever
 
 
 # --- Funções ---
@@ -49,18 +49,37 @@ def transcrever_audio(audio: bytes, mime_type: str) -> str | None:
     return texto
 
 
-def responder(pergunta: str) -> None:
+def sintetizar_audio(texto: str) -> bytes | None:
+    """Gera a voz do Edu. Se falhar, avisa e devolve None (a resposta em texto continua)."""
+    try:
+        return sintetizar(texto)
+    except (errors.APIError, AttributeError, IndexError) as erro:
+        print(f"[voz] Falha ao sintetizar: {erro!r}")
+        st.info("Não consegui gerar o áudio desta vez. A resposta está em texto acima.")
+        return None
+
+
+def responder(pergunta: str, via_voz: bool = False) -> None:
     """Mostra a pergunta, consulta o Edu e guarda a conversa no histórico."""
     st.chat_message("user").write(pergunta)
     with st.chat_message("assistant", avatar="📚"):
         with st.spinner("O Edu está pensando..."):
             resposta = perguntar_ao_edu(pergunta)
-        if resposta:
-            st.write(resposta)
-            st.session_state.mensagens += [
-                {"role": "user", "content": pergunta},
-                {"role": "assistant", "content": resposta},
-            ]
+        if not resposta:
+            return
+        st.write(resposta)
+
+        audio_resposta = None
+        if via_voz:
+            with st.spinner("Gerando áudio..."):
+                audio_resposta = sintetizar_audio(resposta)
+            if audio_resposta:
+                st.audio(audio_resposta, format="audio/wav", autoplay=True)
+
+    st.session_state.mensagens += [
+        {"role": "user", "content": pergunta},
+        {"role": "assistant", "content": resposta, "audio": audio_resposta},
+    ]
 
 
 # --- Página ---
@@ -119,10 +138,13 @@ st.divider()
 st.subheader("💬 Converse com o Edu")
 
 for msg in st.session_state.mensagens:
-    st.chat_message(msg["role"], avatar="📚" if msg["role"] == "assistant" else None).write(msg["content"])
+    with st.chat_message(msg["role"], avatar="📚" if msg["role"] == "assistant" else None):
+        st.write(msg["content"])
+        if msg.get("audio"):
+            st.audio(msg["audio"], format="audio/wav")
 
 audio = st.audio_input("🎤 Ou pergunte por voz")
-st.caption("O áudio é enviado ao Google (Gemini) apenas para transcrição.")
+st.caption("O áudio é enviado ao Google (Gemini) para transcrição e para gerar a resposta falada.")
 
 if audio:
     audio_bytes = audio.getvalue()
@@ -132,7 +154,7 @@ if audio:
         with st.spinner("Ouvindo..."):
             pergunta_voz = transcrever_audio(audio_bytes, audio.type)
         if pergunta_voz:
-            responder(pergunta_voz)
+            responder(pergunta_voz, via_voz=True)
 
 if pergunta := st.chat_input("Ex.: O que é LCI? Faz sentido para o meu perfil?"):
     responder(pergunta)
