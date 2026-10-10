@@ -1,7 +1,8 @@
 """Interface do Suitably (Streamlit)."""
-
 import streamlit as st
-
+from google.genai import errors
+from agent import criar_chat, montar_contexto
+from suitability import PERGUNTAS, calcular_perfil, carregar_produtos, classificar_produtos
 from suitability import PERGUNTAS, calcular_perfil, carregar_produtos, classificar_produtos
 
 def mostrar_produtos(titulo: str, produtos: list[dict], mensagem_vazia: str) -> None:
@@ -12,6 +13,16 @@ def mostrar_produtos(titulo: str, produtos: list[dict], mensagem_vazia: str) -> 
         return
     for p in produtos:
         st.write(f"**{p['nome']}** · risco {p['risco']}/5")
+
+def perguntar_ao_edu(pergunta: str) -> str | None:
+    """Envia a pergunta ao Edu. Retorna a resposta ou None se a API falhar."""
+    try:
+        return st.session_state.chat.send_message(pergunta).text
+    except errors.ServerError:
+        st.error("O Edu está sobrecarregado no momento. Tente novamente em instantes.")
+    except errors.ClientError:
+        st.error("Não foi possível falar com o Edu. Verifique a chave e o modelo no arquivo .env.")
+    return None
 
 st.set_page_config(page_title="Suitably", page_icon="📚")
 st.title("📚 Suitably")
@@ -31,6 +42,7 @@ if enviado:
     if None in respostas.values():
         st.sidebar.error("Responda todas as perguntas.")
     else:
+        
         perfil, risco_max = calcular_perfil(respostas)
         adequados, nao_adequados = classificar_produtos(risco_max, carregar_produtos())
         st.session_state.update(
@@ -40,6 +52,10 @@ if enviado:
             adequados=adequados,
             nao_adequados=nao_adequados,
         )
+        st.session_state.chat = criar_chat(
+            montar_contexto(perfil, risco_max, respostas, adequados, nao_adequados)
+        )
+        st.session_state.mensagens = []
 
 if "perfil" not in st.session_state:
     st.info("👈 Responda o questionário na barra lateral para começar.")
@@ -57,3 +73,22 @@ with col_nao:
         st.session_state.nao_adequados,
         "Todos os produtos do catálogo são compatíveis com o seu perfil.",
     )
+
+# --- Chat ---
+st.divider()
+st.subheader("💬 Converse com o Edu")
+
+for msg in st.session_state.mensagens:
+    st.chat_message(msg["role"], avatar="📚" if msg["role"] == "assistant" else None).write(msg["content"])
+
+if pergunta := st.chat_input("Ex.: O que é LCI? Faz sentido para o meu perfil?"):
+    st.chat_message("user").write(pergunta)
+    with st.chat_message("assistant", avatar="📚"):
+        with st.spinner("O Edu está pensando..."):
+            resposta = perguntar_ao_edu(pergunta)
+        if resposta:
+            st.write(resposta)
+            st.session_state.mensagens += [
+                {"role": "user", "content": pergunta},
+                {"role": "assistant", "content": resposta},
+            ]
