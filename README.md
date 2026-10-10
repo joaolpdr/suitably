@@ -2,6 +2,8 @@
 
 > An educational financial assistant that explains investment products **according to the user's suitability profile**, built for beginners who have never invested.
 
+**🔗 Try it live:** [suitably-edu.streamlit.app](https://suitably-edu.streamlit.app)
+
 Suitably combines a **rule-based suitability engine** (written and tested in Python) with an **LLM tutor** (Gemini). The rules decide what fits the user; the AI only explains. It never recommends.
 
 Built as the final project of the DIO *"Create Your Smart Chatbot for the Financial Market"* challenge, then extended with compliance-oriented design decisions.
