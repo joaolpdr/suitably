@@ -9,6 +9,10 @@ from agent import criar_chat, get_client, montar_contexto
 from agent import criar_chat, montar_contexto
 from suitability import PERGUNTAS, calcular_perfil, carregar_produtos, classificar_produtos
 from voz import sintetizar, transcrever
+import os
+
+LIMITE_PERGUNTAS = int(os.getenv("LIMITE_PERGUNTAS", "10"))
+LIMITE_VOZ = int(os.getenv("LIMITE_VOZ", "3"))
 
 
 # --- Funções ---
@@ -69,6 +73,7 @@ def responder(pergunta: str, via_voz: bool = False) -> None:
         if not resposta:
             return
         st.write(resposta)
+        st.session_state.perguntas_feitas = st.session_state.get("perguntas_feitas", 0) + 1
 
         audio_resposta = None
         if via_voz:
@@ -76,7 +81,7 @@ def responder(pergunta: str, via_voz: bool = False) -> None:
                 audio_resposta = sintetizar_audio(resposta)
             if audio_resposta:
                 st.audio(audio_resposta, format="audio/wav", autoplay=True)
-
+            st.session_state.voz_usada = st.session_state.get("voz_usada", 0) + 1
     st.session_state.mensagens += [
         {"role": "user", "content": pergunta},
         {"role": "assistant", "content": resposta, "audio": audio_resposta},
@@ -145,8 +150,21 @@ for msg in st.session_state.mensagens:
         if msg.get("audio"):
             st.audio(msg["audio"], format="audio/wav")
 
-audio = st.audio_input("🎤 Ou pergunte por voz")
-st.caption("O áudio é enviado ao Google (Gemini) para transcrição e para gerar a resposta falada.")
+feitas = st.session_state.get("perguntas_feitas", 0)
+voz_usada = st.session_state.get("voz_usada", 0)
+
+if feitas >= LIMITE_PERGUNTAS:
+    st.info("Você chegou ao limite de perguntas desta demonstração. Obrigado por testar o Suitably! 📚")
+    st.stop()
+
+st.caption(f"Perguntas restantes nesta demonstração: {LIMITE_PERGUNTAS - feitas}")
+
+if voz_usada < LIMITE_VOZ:
+    audio = st.audio_input("🎤 Ou pergunte por voz")
+    st.caption("O áudio é enviado ao Google (Gemini) para transcrição e para gerar a resposta falada.")
+else:
+    audio = None
+    st.caption("Limite de perguntas por voz atingido. Você pode continuar por texto.")
 
 if audio:
     audio_bytes = audio.getvalue()
