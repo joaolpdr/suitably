@@ -45,6 +45,11 @@ FAIXAS_PERFIL = [
     (9, "Moderado", 3),
     (12, "Arrojado", 5),
 ]
+# (pergunta, resposta) → perfil máximo permitido, independente da pontuação
+TRAVAS = {
+    ("reserva", "Não"): "Conservador",
+    ("prazo", "Menos de 1 ano"): "Conservador",
+}
 
 
 def calcular_perfil(respostas: dict[str, str]) -> tuple[str, int]:
@@ -60,11 +65,22 @@ def calcular_perfil(respostas: dict[str, str]) -> tuple[str, int]:
             raise ValueError(f"Opção inválida para '{chave}': {opcao}")
         pontos += dados["opcoes"][opcao]
 
-    for limite, perfil, risco_max in FAIXAS_PERFIL:
-        if pontos <= limite:
-            return perfil, risco_max
+    # 1. Perfil pela pontuação
+    indice = next(
+        (i for i, (limite, _, _) in enumerate(FAIXAS_PERFIL) if pontos <= limite),
+        None,
+    )
+    if indice is None:
+        raise ValueError(f"Pontuação fora das faixas: {pontos}")
 
-    raise ValueError(f"Pontuação fora das faixas: {pontos}")
+    # 2. Travas: o perfil nunca passa do máximo permitido
+    ordem_perfis = [perfil for _, perfil, _ in FAIXAS_PERFIL]
+    for (chave, opcao), perfil_max in TRAVAS.items():
+        if respostas[chave] == opcao:
+            indice = min(indice, ordem_perfis.index(perfil_max))
+
+    _, perfil, risco_max = FAIXAS_PERFIL[indice]
+    return perfil, risco_max
 
 
 def carregar_produtos(caminho: Path = CAMINHO_PRODUTOS) -> list[dict]:

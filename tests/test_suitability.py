@@ -68,3 +68,26 @@ def test_catalogo_tem_campos_e_risco_validos():
     for produto in carregar_produtos():
         assert CAMPOS_OBRIGATORIOS.issubset(produto), produto.get("nome")
         assert 1 <= produto["risco"] <= 5, produto["nome"]
+
+
+def test_limite_entre_conservador_e_moderado():
+    respostas = respostas_com_pontos(1)          # 4 pontos
+    respostas["prazo"] = "De 1 a 5 anos"         # +1 → 5 (sem trava de prazo)
+    respostas["reserva"] = "Parcial"             # +1 → 6 (sem trava de reserva)
+    assert calcular_perfil(respostas)[0] == "Conservador"
+
+    respostas["reacao"] = "Esperaria recuperar"  # +1 → 7
+    assert calcular_perfil(respostas)[0] == "Moderado"
+
+
+@pytest.mark.parametrize(
+    "chave, opcao",
+    [
+        ("reserva", "Não"),
+        ("prazo", "Menos de 1 ano"),
+    ],
+)
+def test_trava_limita_perfil_a_conservador(chave, opcao):
+    respostas = respostas_com_pontos(3)  # 12 pontos: Arrojado sem travas
+    respostas[chave] = opcao             # continua com 10 pontos, mas ativa a trava
+    assert calcular_perfil(respostas) == ("Conservador", 2)
