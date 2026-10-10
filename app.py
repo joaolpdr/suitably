@@ -4,6 +4,7 @@ import hashlib
 
 import streamlit as st
 from google.genai import errors
+from agent import criar_chat, get_client, montar_contexto
 
 from agent import criar_chat, montar_contexto
 from suitability import PERGUNTAS, calcular_perfil, carregar_produtos, classificar_produtos
@@ -111,6 +112,7 @@ if enviado:
             adequados=adequados,
             nao_adequados=nao_adequados,
         )
+        st.session_state.client = get_client()  # mantém a conexão viva enquanto o chat existir
         st.session_state.chat = criar_chat(
             montar_contexto(perfil, risco_max, respostas, adequados, nao_adequados)
         )
